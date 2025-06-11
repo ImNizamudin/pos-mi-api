@@ -1,0 +1,199 @@
+version: "3.8"
+
+services:
+  product-service:
+    build: ./product-service
+    ports:
+      - "8001:8000"
+    depends_on:
+      - mongo
+    environment:
+      - MONGO_URL=mongodb://mongo:27017
+
+  mongo:
+    image: mongo:6
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  sales-service:
+    build: ./sales-service
+    ports:
+      - "8002:8000"
+    depends_on:
+      - postgres
+    environment:
+      - POSTGRES_URL=postgresql://posuser:pospass@postgres:5432/posdb
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: posuser
+      POSTGRES_PASSWORD: pospass
+      POSTGRES_DB: posdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./sales-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  inventory-service:
+    build: ./inventory-service
+    ports:
+      - "8003:8000"
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  mysql:
+    image: mysql:5.7
+    container_name: mysql-1
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: posdb
+      MYSQL_USER: posuser
+      MYSQL_PASSWORD: pospass
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./cashier-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  cashier-service:
+    build: ./cashier-service
+    ports:
+      - "8004:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    env_file:
+      - ./cashier-service/.env
+
+  receipt-service:
+    build:
+      context: ./receipt-service
+    ports:
+      - "8005:8000"
+    volumes:
+      - ./receipt-service/receipts:/app/receipts
+
+  api-gateway-service:
+    build: ./api-gateway-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - product-service
+      - sales-service
+      - cashier-service
+      - inventory-service
+      - receipt-service
+    environment:
+    - PRODUCT_SERVICE_URL=http://product-service:8000
+    - SALES_SERVICE_URL=http://sales-service:8000
+    - INVENTORY_SERVICE_URL=http://inventory-service:8000
+    - CASHIER_SERVICE_URL=http://cashier-service:8000
+    - RECEIPT_SERVICE_URL=http://receipt-service:8000
+
+
+volumes:
+  mongo_data:
+  pg_data:
+  mysql_data:
+
+
+
+# version: "3.8"
+
+# services:
+#   product-service:
+#     build: ./product-service
+#     ports:
+#       - "8001:8000"
+#     depends_on:
+#       - mongo
+#     environment:
+#       - MONGO_URL=mongodb://mongo:27017
+
+#   mongo:
+#     image: mongo:6
+#     ports:
+#       - "27017:27017"
+#     volumes:
+#       - mongo_data:/data/db
+
+#   sales-service:
+#     build: ./sales-service
+#     ports:
+#       - "8002:8000"
+#     depends_on:
+#       - postgres
+#     environment:
+#       - POSTGRES_URL=postgresql://posuser:pospass@postgres:5432/posdb
+
+#   postgres:
+#     image: postgres:15
+#     environment:
+#       POSTGRES_USER: posuser
+#       POSTGRES_PASSWORD: pospass
+#       POSTGRES_DB: posdb
+#     volumes:
+#       - pg_data:/var/lib/postgresql/data
+
+#   inventory-service:
+#     build: ./inventory-service
+#     ports:
+#       - "8003:8000"
+#     depends_on:
+#       - redis
+#     environment:
+#       - REDIS_HOST=redis
+
+#   redis:
+#     image: redis:7
+#     ports:
+#       - "6379:6379"
+
+#   cashier-service:
+#     build: ./cashier-service
+#     ports:
+#       - "8004:8000"
+#     depends_on:
+#       - mysql
+#     environment:
+#       - MYSQL_HOST=mysql
+#       - MYSQL_USER=posuser
+#       - MYSQL_PASSWORD=pospass
+#       - MYSQL_DB=posdb
+
+#   mysql:
+#     image: mysql:8
+#     environment:
+#       MYSQL_ROOT_PASSWORD: rootpass
+#       MYSQL_DATABASE: posdb
+#       MYSQL_USER: posuser
+#       MYSQL_PASSWORD: pospass
+#     ports:
+#       - "3306:3306"
+#     volumes:
+#       - mysql_data:/var/lib/mysql
+
+#   receipt-service:
+#     build: ./receipt-service
+#     ports:
+#       - "8005:8000"
+
+# volumes:
+#   mongo_data:
+#   pg_data:
+#   mysql_data:

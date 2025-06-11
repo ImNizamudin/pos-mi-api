@@ -1,0 +1,9 @@
+=== STRUK PENJUALAN ===
+Waktu   : 11 Jun 2025, 14.14.11
+Kasir   : Admin Kasir
+-------------------------
+wortel x3 = Rp6000
+pisang x4 = Rp8000
+-------------------------
+TOTAL   : Rp14000
+=========================
