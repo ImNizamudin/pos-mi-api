@@ -25,7 +25,7 @@ Proyek ini ditujukan sebagai fondasi sistem POS berbasis web yang efisien dan mo
 
 ## 🖼️ API Microservices Architecture Preview
 
-![Microservices Architecture](/pos-mi-microservice.png)
+![Microservices Architecture](./pos-mi-microservice.png)
 
 ---
 
