@@ -1,5 +1,4 @@
-
-# 💸 POS-Mi API - Microservices Architecture for Point of Sale System ![Status](https://img.shields.io/badge/status-in%20progress-yellow)
+# 🛒 POS-Mi API - Point of Sale Microservices System ![Status](https://img.shields.io/badge/status-completed-brightgreen)
 
 ---
 
